@@ -109,7 +109,7 @@ class FlutterForegroundService : Service() {
 
     private fun startFlutterEngine(callbackHandle: Long) {
         Log.i("FlutterForegroundService", "Creating flutter engine...")
-        FlutterLoader.getInstance().ensureInitializationComplete(applicationContext, null)
+        FlutterMain.ensureInitializationComplete(applicationContext, null)
 
         val callback: FlutterCallbackInformation = FlutterCallbackInformation.lookupCallbackInformation(callbackHandle)
 
