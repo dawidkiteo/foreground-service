@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import android.util.Log
 import androidx.core.app.NotificationCompat
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.dart.DartExecutor
@@ -33,7 +34,8 @@ class FlutterForegroundService : Service() {
     }
 
     override fun onCreate() {
-        FlutterMain.startInitialization(applicationContext);
+        FlutterMain.startInitialization(applicationContext)
+        Log.i("FlutterForegroundService", "Flutter service initialization started")
         super.onCreate()
     }
 
@@ -106,6 +108,7 @@ class FlutterForegroundService : Service() {
     }
 
     private fun startFlutterEngine(callbackHandle: Long) {
+        Log.i("FlutterForegroundService", "Creating flutter engine...")
         FlutterLoader.getInstance().ensureInitializationComplete(applicationContext, null)
 
         val callback: FlutterCallbackInformation = FlutterCallbackInformation.lookupCallbackInformation(callbackHandle)
