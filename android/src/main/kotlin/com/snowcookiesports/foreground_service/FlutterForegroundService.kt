@@ -32,6 +32,11 @@ class FlutterForegroundService : Service() {
         super.onDestroy()
     }
 
+    override fun onCreate() {
+        FlutterMain.startInitialization(applicationContext);
+        super.onCreate()
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             "start" -> {
