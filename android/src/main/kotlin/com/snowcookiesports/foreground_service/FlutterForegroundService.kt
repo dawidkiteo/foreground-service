@@ -113,7 +113,8 @@ class FlutterForegroundService : Service() {
 
         val callback: FlutterCallbackInformation = FlutterCallbackInformation.lookupCallbackInformation(callbackHandle)
 
-        backgroundEngine = FlutterEngine(this)
+        backgroundEngine = FlutterEngine(this, null, false)
+        backgroundEngine?.apply { ForegroundServicePluginRegistrant.register(this) }
         backgroundEngine?.serviceControlSurface?.attachToService(this, null, true)
 
         val dartCallback = DartExecutor.DartCallback(assets, FlutterMain.findAppBundlePath(), callback)
