@@ -32,6 +32,13 @@ class ForegroundService {
   static Future<void> stopForegroundService() async {
     await _mainChannel.invokeMethod("stopForegroundService");
   }
+
+  static void handleStopRequest(Future<void> Function() onStopRequest) {
+    _mainChannel.setMethodCallHandler((call) async {
+      await onStopRequest();
+      return true;
+    });
+  }
 }
 
 enum EngineEvent { stopRequest }

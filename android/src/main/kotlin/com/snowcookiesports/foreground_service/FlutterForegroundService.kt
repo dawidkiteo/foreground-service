@@ -8,11 +8,11 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
+import android.os.Process
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.embedding.engine.dart.DartExecutor
-import io.flutter.embedding.engine.loader.FlutterLoader
 import io.flutter.view.FlutterCallbackInformation
 import io.flutter.view.FlutterMain
 
@@ -27,10 +27,17 @@ class FlutterForegroundService : Service() {
     override fun onBind(p0: Intent?): IBinder? = null
 
     override fun onDestroy() {
-        backgroundEngine?.serviceControlSurface?.detachFromService()
-        backgroundEngine?.destroy()
-        backgroundEngine = null
+        Log.i("FlutterForegroundService", "Called onDestroy.")
+        cleanUpAfterFlutterEngine()
         super.onDestroy()
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        Log.i("FlutterForegroundService", "Called onTaskRemoved.")
+        cleanUpAfterFlutterEngine()
+        stopService()
+        Process.killProcess(Process.myPid())
+        super.onTaskRemoved(rootIntent)
     }
 
     override fun onCreate() {
@@ -56,7 +63,7 @@ class FlutterForegroundService : Service() {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     val channel = NotificationChannel(
                             CHANNEL_ID,
-                            "flutter_foreground_service_channel",
+                            "Ongoing run",
                             NotificationManager.IMPORTANCE_DEFAULT
                     )
                     (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager)
@@ -70,27 +77,12 @@ class FlutterForegroundService : Service() {
                         .setContentIntent(pendingIntent)
                         .setOngoing(true)
 
-                // postponed, as I can not find any easy solution for calling stop method
-//                val stopSelf = Intent(this, FlutterForegroundService::class.java)
-//                stopSelf.action = STOP_SERVICE_ACTION
-//                val pStopSelf = PendingIntent.getService(
-//                        this,
-//                        0,
-//                        stopSelf,
-//                        PendingIntent.FLAG_CANCEL_CURRENT
-//                )
-//                builder.addAction(
-//                        getNotificationIcon(bundle.getString("stopIcon")!!),
-//                        bundle.getString("stopText"),
-//                        pStopSelf
-//                )
-
                 stopCallbackId = bundle.getLong("stopCallbackId")
                 startForeground(NOTIFICATION_ID, builder.build())
                 startFlutterEngine(bundle.getLong("callbackId"))
             }
             "stop" -> {
-                stopForeground(STOP_FOREGROUND_DETACH)
+                stopService()
             }
             STOP_SERVICE_ACTION -> {
                 stopCallbackId?.run {
@@ -127,5 +119,23 @@ class FlutterForegroundService : Service() {
                 "drawable",
                 applicationContext.packageName
         )
+    }
+
+    private fun stopService() {
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
+    }
+
+    private fun cleanUpAfterFlutterEngine() {
+        Log.i("FlutterForegroundService", "Destroying flutter engine started.")
+        disposeFlutterEngine()
+    }
+
+    private fun disposeFlutterEngine() {
+        backgroundEngine?.plugins?.removeAll()
+        backgroundEngine?.serviceControlSurface?.detachFromService()
+        backgroundEngine?.destroy()
+        backgroundEngine = null
+        Log.i("FlutterForegroundService", "Destroying flutter engine finished.")
     }
 }
